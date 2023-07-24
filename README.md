@@ -30,7 +30,7 @@ If Python is your preferred language, you can learn more about how to utilize *A
 Before starting, ensure that [Node.js](http://nodejs.org/) and [npm](https://npmjs.com) are installed on your system. Then, execute the following command:
 
 ```bash
-npm install ts-askit
+npm install ts-askit # XXX: not published yet
 ```
 
 This package relies on `ts-patch`. To install `ts-patch`, run:
