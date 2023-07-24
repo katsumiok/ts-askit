@@ -93,7 +93,7 @@ Once the function is defined, it can be invoked like any other function. This fu
 import { ask } from 'ts-askit';
 
 function sort(numbers: number[]){
-  return ask<number>('Sort {{numbers}} in ascending order');
+  return ask<number[]>('Sort {{numbers}} in ascending order');
 }
 ```
 
