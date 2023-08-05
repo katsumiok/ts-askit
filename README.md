@@ -43,9 +43,7 @@ Add the following snippet to your `tsconfig.json`:
 
 ```json
 "compilerOptions": {
-  "plugins": [
-    { "transform": "ts-askit" }
-  ]
+    "plugins": [{ "transform": "ts-askit/transform" }]
 }
 ```
 
