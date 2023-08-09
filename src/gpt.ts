@@ -107,6 +107,7 @@ function makeMessages<T>(
       content: question + '\n',
     },
   ];
+  // console.log(messages.map((message) => message.content).join('\n'));
   return messages;
 }
 
@@ -128,16 +129,21 @@ function askString(
 }
 
 function makeSystemMessage(type: string) {
-  return `You are a helpful assistant that generates responses in JSON format enclosed with \`\`\`json\n...\n\`\`\` like:
+  let message = `You are a helpful assistant that generates responses in JSON format enclosed with \`\`\`json and \`\`\` like:
 \`\`\`json
-{ "reason": "Reason for the answer", "answer": "Final answer or result" }
+{ "reason": "Step-by-step reason for the answer", "answer": "Final answer or result" }
 \`\`\`
 
-The answer inside the JSON code block should be given in the type defined as follows:
+The response in the JSON code block should be given in the type defined as follows:
 \`\`\`ts
 { reason: string; answer: ${type} }
 \`\`\`
-`;
+Explain your answer step-by-step in the 'reason' field.`;
+  if (type === 'string') {
+    message +=
+      "\nNo additional text should be part of the value in the 'answer' field.";
+  }
+  return message;
 }
 
 function askCoding(question: string): Array<ChatCompletionRequestMessage> {
@@ -205,21 +211,50 @@ export function extractJson(result: string): any | null {
   }
 }
 
-export async function chat<T>(
-  task: string,
-  varMap: { [key: string]: any },
+function makeRetryMessage(returnType: t.Type<any>): string {
+  const type = printType(returnType);
+  return `Generates responses again in JSON format enclosed with \`\`\`json and \`\`\` like:
+\`\`\`json
+{ "reason": "Reason for the answer", "answer": "Final answer or result" }
+\`\`\`
+The response in the JSON code block should be given in the type defined as follows:
+\`\`\`ts
+{ reason: string; answer: ${type} }
+\`\`\`
+`;
+}
+
+async function askAndParse<T>(
   returnType: t.Type<T>,
-  trainingExamples: ExamplesType
-): Promise<T> {
-  const messages = makeMessages(task, varMap, returnType, trainingExamples);
+  messages: ChatCompletionRequestMessage[]
+): Promise<[T, string, string[], any]> {
+  let retry = false;
+  const errors: string[] = [];
   for (let i = 0; i < 10; i++) {
     // console.log(messages);
     const completion = await chatWithRetry('gpt-3.5-turbo-16k', messages);
-    const result = completion.data.choices[0].message.content;
+    const content = completion.data.choices[0].message.content;
     try {
-      const value = parse(result, returnType);
-      return value;
-    } catch (error) {
+      const [data, reason] = parse(content, returnType);
+      return [data, reason, errors, completion];
+    } catch (error: any) {
+      errors.push(error.message);
+      if (retry) {
+        // Remove the last two element from the messages
+        messages.splice(-2);
+        retry = false;
+      } else {
+        const s = makeRetryMessage(returnType);
+        messages.push({
+          role: ChatCompletionRequestMessageRoleEnum.Assistant,
+          content: content,
+        });
+        messages.push({
+          role: ChatCompletionRequestMessageRoleEnum.System,
+          content: s,
+        });
+        retry = true;
+      }
       // console.log('failed to parse as JSON: ', result);
       // console.log('error: ', error);
       // console.log('retrying...');
@@ -228,10 +263,20 @@ export async function chat<T>(
   throw new Error('Failed to parse JSON after multiple attempts');
 }
 
-function parse<T>(text: string, returnType: t.Type<T>): T | never {
+export async function chat<T>(
+  task: string,
+  varMap: { [key: string]: any },
+  returnType: t.Type<T>,
+  trainingExamples: ExamplesType
+): Promise<[T, string, string[], any]> {
+  const messages = makeMessages(task, varMap, returnType, trainingExamples);
+  return askAndParse(returnType, messages);
+}
+
+function parse<T>(text: string, returnType: t.Type<T>): [T, string] | never {
   const data = extractJson(text);
   if (data === null) {
-    throw new Error('Answer is not in a single JSON block');
+    throw new Error('Answer is not in a JSON block');
   }
   if (!(data instanceof Object)) {
     throw new Error('JSON must be an object');
@@ -243,7 +288,7 @@ function parse<T>(text: string, returnType: t.Type<T>): T | never {
   if (!validate(returnType, value)) {
     throw new Error(`Output must be of type ${printType(returnType)}`);
   }
-  return value;
+  return [value, 'reason' in data ? data['reason'] : ''];
 }
 
 export async function askCode(message: string): Promise<any> {
@@ -258,7 +303,7 @@ function makeQuestion(task: string, varMap: { [key: string]: any }): string {
     return question;
   }
   const varList = Object.entries(varMap).map(
-    ([key, value]) => `    ${key} = ${JSON.stringify(value)}`
+    ([key, value]) => `  '${key}' = ${JSON.stringify(value)}`
   );
   return question + '\n where\n' + varList.join('\n');
 }
