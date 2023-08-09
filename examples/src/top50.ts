@@ -97,7 +97,6 @@ function generateFibonacci(n: number) {
   const example: Example[] = [{ input: { n: 5 }, output: [0, 1, 1, 2, 3] }];
   return ask<number[]>('Generate the Fibonacci sequence up to {{n}}.', example);
 }
-// ... Previous function definitions are correct ...
 
 // Write a function that finds the greatest common divisor of two numbers.
 function findGreatestCommonDivisor(a: number, b: number) {
@@ -163,7 +162,7 @@ function formatDate(d: Date) {
   ];
   return ask<string>(
     'Format the date {{d}} into a specific string format.'
-    //    example
+    /* example */
   );
 }
 
@@ -177,7 +176,7 @@ function findDateDifference(d1: Date, d2: Date) {
   ];
   return ask<number>(
     'Find the difference between the dates {{d1}} and {{d2}}.'
-    //    example
+    /* example */
   );
 }
 
@@ -381,13 +380,4 @@ function formatCurrency(n: number) {
 function findMode(ns: number[]) {
   const example: Example[] = [{ input: { ns: [1, 2, 3, 1, 2, 3] }, output: 1 }];
   return ask<number>('Find the mode of the array {{ns}}.', example);
-}
-
-// Write a function that checks if an array is sorted in ascending order.
-function isSortedAscending(ns: number[]) {
-  const example: Example[] = [{ input: { ns: [1, 2, 3] }, output: true }];
-  return ask<boolean>(
-    'Check if the array {{ns}} is sorted in ascending order.',
-    example
-  );
 }

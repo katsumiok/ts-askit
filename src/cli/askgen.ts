@@ -242,6 +242,7 @@ function generateFiles(filename: string) {
   // generate source code
   const modules = new Set<string>();
   info.forEach(async (i: Info) => {
+    const start = process.hrtime.bigint();
     const { modulePath } = makeModuleName(sourceFilePath, i.name);
     modules.add(i.name);
     if (fs.existsSync(modulePath)) {
@@ -252,6 +253,7 @@ function generateFiles(filename: string) {
     if (!fs.existsSync(dirPath)) {
       fs.mkdirSync(dirPath, { recursive: true });
     }
+    let testFailedCount = 0;
     for (let count = 0; count < 10; count++) {
       const s = await sendChatRequest(make_message(i.desc, i.params));
       const m = s.match(/\[([0-9])\]/);
@@ -288,11 +290,28 @@ function generateFiles(filename: string) {
           const jsCode = output.outputText;
           // console.log('ts code: ', code);
           // console.log('js code: ', jsCode);
-          let ok = testFunction(jsCode, i);
+          const generatedFunc = getFunction(jsCode, i.name);
+          if (!generatedFunc) {
+            continue;
+          }
+          let ok = testFunction(generatedFunc, i);
           if (ok) {
-            writeFileSync(modulePath, code);
+            const program = `// Recompilation count: ${testFailedCount}}\n${code}`;
+            writeFileSync(modulePath, program);
+            const end = process.hrtime.bigint();
+            const elapsed = Number(end - start) / 1000000000;
             console.log('Generated: ', modulePath, count + 1);
+            writeFileSync(
+              filename + '.log',
+              JSON.stringify({
+                name: i.name,
+                elapsed,
+                count,
+              })
+            );
             break;
+          } else {
+            testFailedCount++;
           }
         } else {
           console.log(diag);
@@ -317,31 +336,34 @@ function generateFiles(filename: string) {
   // });
 }
 
-function testFunction(jsCode: string, i: Info) {
-  let ok = true;
+function getFunction(jsCode: string, functionName: string) {
   try {
     const generatedFunc = eval(jsCode);
+    if (generatedFunc.name !== functionName) {
+      return false;
+    }
+    return generatedFunc;
+  } catch (e) {
+    return false;
+  }
+}
+
+function testFunction(generatedFunc: any, i: Info) {
+  let ok = true;
+  try {
     i.examples.forEach(({ input, output }) => {
       const args = i.params.map(([_, name]) => input[name]);
-      // const args: string[] = [];
-      // for (let name in inputs) {
-      //   args.push(inputs[name]);
-      // }
-      //console.log('args: ', args);
       const actualOutput = generatedFunc(...args);
       if (
         !_.isEqual(actualOutput, output) &&
         !almostEqual(actualOutput, output) // XXX: for float
       ) {
         console.log('Failed: ', input, output, actualOutput, i.desc);
-        console.log('Code: ', jsCode);
         console.log(JSON.stringify(args));
         ok = false;
       }
     });
   } catch (e) {
-    console.log(e);
-    console.log(jsCode);
     ok = false;
   }
   return ok;
