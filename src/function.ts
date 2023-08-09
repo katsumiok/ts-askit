@@ -2,7 +2,6 @@ import { ExamplesType, checkExamples } from './example';
 import { generateUniqueFunctionName } from './function-name';
 import { chat } from './gpt';
 import { convertTemplate, extractVariables } from './template';
-import { printType } from './type-printer';
 import * as t from './types';
 
 export class Function<T> {
@@ -37,7 +36,7 @@ export class Function<T> {
     });
   }
 
-  call(args: { [key: string]: any } = {}): Promise<T> {
+  async call(args: { [key: string]: any } = {}) {
     this.checkArgs(args);
     const convertedTemplate = convertTemplate(this.template);
     return chat(
@@ -55,26 +54,36 @@ export class Function<T> {
   }
 }
 
+type DefinedFunctionType<T> = {
+  (args: { [key: string]: any }): Promise<T>;
+  reason: string;
+  errors: string[];
+  completion: any;
+};
+
 export function define<T>(
   type: t.Type<T>,
   template: string,
   trainingExamples?: ExamplesType
-): (args: { [key: string]: any }) => Promise<T>;
+): DefinedFunctionType<T>;
 export function define<T>(
   template: string,
   trainingExamples?: ExamplesType
-): (args: { [key: string]: any }) => Promise<T>;
-export function define<T>(
-  ...args: unknown[]
-): (args: { [key: string]: any }) => Promise<T> {
+): DefinedFunctionType<T>;
+export function define<T>(...args: unknown[]): DefinedFunctionType<T> {
   if (typeof args[0] != 'string') {
     const type = args[0] as t.Type<T>;
     const template = args[1] as string;
     const trainingExamples = (args[2] as ExamplesType) || [];
     const f = new Function(type, template, trainingExamples);
-    return function (args: { [key: string]: any } = []) {
-      return f.call(args);
-    };
+    const g = async function (args: { [key: string]: any } = []) {
+      const [answer, reason, errors, completion] = await f.call(args);
+      g.reason = reason;
+      g.errors = errors;
+      g.completion = completion;
+      return answer;
+    } as DefinedFunctionType<T>;
+    return g;
   }
   throw new Error('defined should be transpiled by AskIt');
 }

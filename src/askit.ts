@@ -3,6 +3,20 @@ import { ExamplesType } from './example';
 import { define } from './function';
 import * as t from './types';
 
+let fReason = '';
+let fErrors: string[] = [];
+let fCompletion: any = { data: null };
+
+export function getReason(): string {
+  return fReason;
+}
+export function getErrors(): string[] {
+  return fErrors;
+}
+export function getCompletion(): any {
+  return fCompletion;
+}
+
 export async function llm<T = any>(
   template: string,
   examples: ExamplesType = []
@@ -33,7 +47,11 @@ export async function ask<T = any>(...args: unknown[]): Promise<T> {
     examples = args[2] as ExamplesType;
     const argsMap = args[3] as { [key: string]: any };
     const f = define(type, template, examples);
-    const result = f(argsMap);
+    const result = await f(argsMap);
+    fReason = f.reason;
+    fErrors = f.errors;
+    fCompletion = f.completion;
+
     return result;
   }
   throw new Error('Invalid number of arguments');
