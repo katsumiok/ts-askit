@@ -7,7 +7,7 @@ import {
 } from 'openai';
 
 import * as t from './types';
-import { ExamplesType } from './example';
+import { ExampleType, ExamplesType } from './example';
 import { printType } from './type-printer';
 import { validate } from './types/validator';
 import { getConfig, subscribe } from './config';
@@ -146,7 +146,40 @@ Explain your answer step-by-step in the 'reason' field.`;
   return message;
 }
 
-function askCoding(question: string): Array<ChatCompletionRequestMessage> {
+function makeSingleExampleCode(
+  functionName: string,
+  example: ExampleType
+): string {
+  const input = example['input'];
+  const output = example['output'];
+  const inputString = JSON.stringify(input);
+  const outputString = JSON.stringify(output);
+  const code = `\`\`\`ts
+${functionName}(${inputString})
+// ${outputString}
+\`\`\``;
+  return code;
+}
+
+function makeExampleCode(
+  functionName: string,
+  trainingExamples: ExamplesType
+): string {
+  if (trainingExamples.length === 0) {
+    return '';
+  }
+  const examples = trainingExamples.map((example) =>
+    makeSingleExampleCode(functionName, example)
+  );
+  return '\nExamples:\n' + examples.join('\n');
+}
+
+function makeCodingPrompt(
+  functionSkelton: string,
+  functionName: string,
+  trainingExamples: ExamplesType
+): Array<ChatCompletionRequestMessage> {
+  const examples = makeExampleCode(functionName, trainingExamples);
   return [
     {
       role: ChatCompletionRequestMessageRoleEnum.System,
@@ -155,32 +188,28 @@ function askCoding(question: string): Array<ChatCompletionRequestMessage> {
     },
     {
       role: ChatCompletionRequestMessageRoleEnum.User,
-      content: `
-      \`\`\`ts
-      function add(a: number, b: number): number {
-        // add 'a' and 'b'
-      }
-      \`\`\`
-      `,
+      content: `\`\`\`ts
+function add(a: number, b: number): number {
+  // add 'a' and 'b'
+}
+\`\`\``,
     },
     {
       role: ChatCompletionRequestMessageRoleEnum.Assistant,
-      content: `
-      \`\`\`ts
-      function add(a: number, b: number): number {
-        // add 'a' and 'b'
-        return a + b;
-      }
-      \`\`\`
-      `,
+      content: `\`\`\`ts
+function add(a: number, b: number): number {
+  // add 'a' and 'b'
+  return a + b;
+}
+\`\`\``,
     },
     {
       role: ChatCompletionRequestMessageRoleEnum.User,
-      content: `
-      \`\`\`ts
-      ${question}
-      \`\`\`
-      `,
+      content: `\`\`\`ts
+${functionSkelton}
+\`\`\`
+${examples}
+`,
     },
   ];
 }
@@ -291,8 +320,14 @@ function parse<T>(text: string, returnType: t.Type<T>): [T, string] | never {
   return [value, 'reason' in data ? data['reason'] : ''];
 }
 
-export async function askCode(message: string): Promise<any> {
-  const s = await sendChatRequest(askCoding(message));
+export async function askCode(
+  message: string,
+  functionName: string,
+  trainingExamples: ExamplesType
+): Promise<any> {
+  const messages = makeCodingPrompt(message, functionName, trainingExamples);
+  console.log(messages.map((message) => message.content).join('\n'));
+  const s = await sendChatRequest(messages);
   //console.log(s);
   return s;
 }

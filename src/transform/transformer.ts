@@ -185,7 +185,7 @@ function rewriteDefineCall(
   info.push({
     signature,
     desc: convertTemplate(template.text),
-    params: variables.map((name) => ['any', name]), // XXX
+    params: [], // XXX: indicate that this is a defined function
     name,
     trainingExamples,
     testExamples,

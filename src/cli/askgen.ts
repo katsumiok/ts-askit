@@ -10,6 +10,7 @@ import * as _ from 'lodash';
 import * as path from 'path';
 import * as fs from 'fs';
 import { Info } from '../info';
+import { ExamplesType } from '../example';
 
 const x = `Please explain the reason before answering yes or no.
 Final answer should be enclosed with a bracket like [yes].
@@ -205,19 +206,29 @@ async function IsCodable(taskDescription: string) {
   `));
 }
 
-async function Generate(signature: string, taskDescription: string) {
+async function Generate(
+  signature: string,
+  taskDescription: string,
+  functionName: string,
+  trainingExamples: ExamplesType
+) {
   const func = `
     ${signature} {
         // ${taskDescription}
     }
 `;
   //  return llm<string>(`Implement ${func} in TypeScript`);
-  return await askCode(func);
+  return await askCode(func, functionName, trainingExamples);
 }
 
-async function Implement(signature: string, taskDescription: string) {
+async function Implement(
+  signature: string,
+  taskDescription: string,
+  functionName: string,
+  trainingExamples: ExamplesType
+) {
   if (await IsCodable(taskDescription)) {
-    return Generate(signature, taskDescription);
+    return Generate(signature, taskDescription, functionName, trainingExamples);
   } else {
     console.log('Not codable: ', taskDescription);
   }
@@ -259,7 +270,12 @@ async function generateFiles(filename: string) {
       const m = s.match(/\[([0-9])\]/);
 
       if (m && !s.includes('[2]')) {
-        const s = await Generate(i.signature, i.desc);
+        const s = await Generate(
+          i.signature,
+          i.desc,
+          i.name,
+          i.trainingExamples
+        );
         const code = extract_ts(s);
         if (code.length === 0) {
           continue;
@@ -373,7 +389,12 @@ async function testFunction(generatedFunc: any, i: Info) {
   try {
     for (const example of i.testExamples) {
       const args = i.params.map(([_, name]) => example.input[name]);
-      const actualOutput = await executeWithTimeout(generatedFunc, args, 60000);
+      const isDefinedFunction = i.params.length === 0;
+      let actualOutput = isDefinedFunction
+        ? await executeWithTimeout(generatedFunc, [example.input], 60000)
+        : await executeWithTimeout(generatedFunc, args, 60000);
+
+      //const actualOutput =
       if (
         !_.isEqual(actualOutput, example.output) &&
         !almostEqual(actualOutput, example.output) // XXX: for float
