@@ -232,7 +232,7 @@ if (args.length !== 1) {
   process.exit(1);
 }
 
-function generateFiles(filename: string) {
+async function generateFiles(filename: string) {
   const text = readFileSync(filename, 'utf-8');
   const lines = text.split('\n');
   const info: Info[] = lines.map((line: string) => JSON.parse(line));
@@ -241,7 +241,7 @@ function generateFiles(filename: string) {
   const sourceFilePath = path.join(dirName, sourceFileName);
   // generate source code
   const modules = new Set<string>();
-  info.forEach(async (i: Info) => {
+  for (const i of info) {
     const start = process.hrtime.bigint();
     const { modulePath } = makeModuleName(sourceFilePath, i.name);
     modules.add(i.name);
@@ -294,9 +294,9 @@ function generateFiles(filename: string) {
           if (!generatedFunc) {
             continue;
           }
-          let ok = testFunction(generatedFunc, i);
+          let ok = await testFunction(generatedFunc, i);
           if (ok) {
-            const program = `// Recompilation count: ${testFailedCount}}\n${code}`;
+            const program = `// Recompilation count: ${testFailedCount}\n${code}`;
             writeFileSync(modulePath, program);
             const end = process.hrtime.bigint();
             const elapsed = Number(end - start) / 1000000000;
@@ -319,7 +319,7 @@ function generateFiles(filename: string) {
         }
       }
     }
-  });
+  }
 
   // delete unused files
   const baseName = path.basename(filename, '.ts.jsonl');
@@ -348,21 +348,47 @@ function getFunction(jsCode: string, functionName: string) {
   }
 }
 
-function testFunction(generatedFunc: any, i: Info) {
+function executeWithTimeout(
+  func: any,
+  args: any[],
+  timeout: number
+): Promise<any> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error('Timeout'));
+    }, timeout);
+    try {
+      const result = func(...args);
+      clearTimeout(timer);
+      resolve(result);
+    } catch (e) {
+      clearTimeout(timer);
+      reject(e);
+    }
+  });
+}
+
+async function testFunction(generatedFunc: any, i: Info) {
   let ok = true;
   try {
-    i.examples.forEach(({ input, output }) => {
-      const args = i.params.map(([_, name]) => input[name]);
-      const actualOutput = generatedFunc(...args);
+    for (const example of i.testExamples) {
+      const args = i.params.map(([_, name]) => example.input[name]);
+      const actualOutput = await executeWithTimeout(generatedFunc, args, 60000);
       if (
-        !_.isEqual(actualOutput, output) &&
-        !almostEqual(actualOutput, output) // XXX: for float
+        !_.isEqual(actualOutput, example.output) &&
+        !almostEqual(actualOutput, example.output) // XXX: for float
       ) {
-        console.log('Failed: ', input, output, actualOutput, i.desc);
+        console.log(
+          'Failed: ',
+          example.input,
+          example.output,
+          actualOutput,
+          i.desc
+        );
         console.log(JSON.stringify(args));
         ok = false;
       }
-    });
+    }
   } catch (e) {
     ok = false;
   }

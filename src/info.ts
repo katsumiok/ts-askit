@@ -5,5 +5,6 @@ export type Info = {
   desc: string;
   params: [string, string][];
   name: string;
-  examples: ExamplesType;
+  trainingExamples: ExamplesType;
+  testExamples: ExamplesType;
 };

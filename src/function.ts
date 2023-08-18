@@ -54,35 +54,47 @@ export class Function<T> {
   }
 }
 
-type DefinedFunctionType<T> = {
-  (args: { [key: string]: any }): Promise<T>;
+type DefinedFunctionType<T, U> = {
+  (args: U): Promise<T>;
   reason: string;
   errors: string[];
   completion: any;
 };
 
-export function define<T>(
+export function define<
+  T,
+  U extends Record<string, any> = { [key: string]: any },
+>(
   type: t.Type<T>,
   template: string,
-  trainingExamples?: ExamplesType
-): DefinedFunctionType<T>;
-export function define<T>(
+  trainingExamples?: ExamplesType,
+  testExamples?: ExamplesType
+): DefinedFunctionType<T, U>;
+export function define<
+  T,
+  U extends Record<string, any> = { [key: string]: any },
+>(
   template: string,
-  trainingExamples?: ExamplesType
-): DefinedFunctionType<T>;
-export function define<T>(...args: unknown[]): DefinedFunctionType<T> {
+  trainingExamples?: ExamplesType,
+  testExamples?: ExamplesType
+): DefinedFunctionType<T, U>;
+export function define<
+  T,
+  U extends { [key: string]: any } = { [key: string]: any },
+>(...args: unknown[]): DefinedFunctionType<T, U> {
   if (typeof args[0] != 'string') {
     const type = args[0] as t.Type<T>;
     const template = args[1] as string;
     const trainingExamples = (args[2] as ExamplesType) || [];
     const f = new Function(type, template, trainingExamples);
-    const g = async function (args: { [key: string]: any } = []) {
+    const g = async function (args: U = {} as U) {
+      // XXX: as U needed?
       const [answer, reason, errors, completion] = await f.call(args);
       g.reason = reason;
       g.errors = errors;
       g.completion = completion;
       return answer;
-    } as DefinedFunctionType<T>;
+    } as DefinedFunctionType<T, U>;
     return g;
   }
   throw new Error('defined should be transpiled by AskIt');
