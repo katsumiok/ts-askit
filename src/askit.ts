@@ -19,34 +19,39 @@ export function getCompletion(): any {
 
 export async function llm<T = any>(
   template: string,
-  examples: ExamplesType = []
+  trainingExamples: ExamplesType = [],
+  testExamples: ExamplesType = []
 ): Promise<T> {
-  return ask<T>(template, examples);
+  return ask<T>(template, testExamples, trainingExamples);
 }
 
 export async function ask<T = any>(
   template: string,
-  examples?: ExamplesType
+  trainingExamplesExamples?: ExamplesType,
+  testExamples?: ExamplesType
 ): Promise<T>;
 export async function ask<T>(
   type: t.Type<T>,
   template: string,
-  examples?: ExamplesType,
+  trainingExamplesExamples?: ExamplesType,
+  testExamples?: ExamplesType,
   args?: { [key: string]: any }
 ): Promise<T>;
 export async function ask<T = any>(...args: unknown[]): Promise<T> {
   let type: t.Type<T>;
   let template: string;
-  let examples: ExamplesType;
+  let trainingExamples: ExamplesType;
+  let testExamples: ExamplesType;
 
   if (typeof args[0] === 'string') {
     throw new Error('Transpilation with AskIt is needed!');
   } else if (args[0] instanceof t.Type) {
     type = args[0] as t.Type<T>;
     template = args[1] as string;
-    examples = args[2] as ExamplesType;
+    trainingExamples = args[2] as ExamplesType;
+    testExamples = args[3] as ExamplesType;
     const argsMap = args[3] as { [key: string]: any };
-    const f = define(type, template, examples);
+    const f = define(type, template, trainingExamples, testExamples);
     const result = await f(argsMap);
     fReason = f.reason;
     fErrors = f.errors;

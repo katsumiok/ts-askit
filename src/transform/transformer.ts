@@ -139,19 +139,95 @@ function rewriteDefineCall(
   if (node.arguments.length > 0 && !ts.isStringLiteralLike(node.arguments[0])) {
     return node;
   }
-  if (node.typeArguments?.length !== 1) {
-    throwError(node, `expects exactly one type parameter`);
+  if (node.typeArguments?.length !== 1 && node.typeArguments?.length !== 2) {
+    throwError(node, `expects exactly two type parameters`);
   }
 
+  const template = node.arguments[0] as ts.StringLiteral;
+  const variables = extractVariables(template.text);
+  const variableMapObject = makeVariableMapObject(variables);
   const returnType = node.typeArguments[0];
-  const typeExpression = createTypeExpression(returnType, checker);
-  const newNode = ts.factory.updateCallExpression(
-    node,
-    node.expression,
-    node.typeArguments,
-    [typeExpression, ...node.arguments]
+  // if node.typeArguments.length === 1 param type should be {}
+  const paramType =
+    node.typeArguments[1] || ts.factory.createTypeLiteralNode([]);
+
+  const generator = new JsTypeGenerator();
+  //  const typeString = generator.makeTypeDirection(returnType, checker);
+  //  const typeExpression = makeExpressionFromString(typeString);
+
+  const examplesNode =
+    node.arguments.length >= 2
+      ? node.arguments[1]
+      : ts.factory.createArrayLiteralExpression([], false);
+
+  const returnTypeString = checker.typeToString(
+    checker.getTypeAtLocation(returnType)
   );
-  return newNode;
+  const name = generateUniqueFunctionName(
+    //    [template.text, ...paramTypeStrings, returnTypeString].join('_'),
+    [template.text, printNode(paramType), returnTypeString].join('_')
+  );
+  if (paramType && !ts.isTypeLiteralNode(paramType)) {
+    throwError(node, `paramType should be TypeLiteralNode`);
+  }
+  const decl = makeSignature2(name, returnType, paramType, variables, checker);
+  const signature = printNode(decl);
+  const trainingExamples = (
+    node.arguments.length >= 2 && ts.isIdentifier(node.arguments[1])
+      ? getIdentifierValue(node.arguments[1], checker)
+      : []
+  ) as ExampleType[];
+  const testExamples = (
+    node.arguments.length >= 3 && ts.isIdentifier(node.arguments[2])
+      ? getIdentifierValue(node.arguments[2], checker)
+      : []
+  ) as ExampleType[];
+  info.push({
+    signature,
+    desc: convertTemplate(template.text),
+    params: variables.map((name) => ['any', name]), // XXX
+    name,
+    trainingExamples,
+    testExamples,
+  });
+
+  const sourceFileName = node.getSourceFile().fileName;
+  const { moduleName, modulePath } = makeModuleName(sourceFileName, name);
+
+  if (fs.existsSync(modulePath)) {
+    console.log('Found:', moduleName);
+
+    const importStatement = ts.factory.createImportDeclaration(
+      undefined,
+      ts.factory.createImportClause(
+        false,
+        undefined,
+        ts.factory.createNamedImports([
+          ts.factory.createImportSpecifier(
+            false,
+            undefined,
+            ts.factory.createIdentifier(name)
+          ),
+        ])
+      ),
+      ts.factory.createStringLiteral('./askit/' + moduleName)
+    );
+    imports.push(importStatement);
+    return ts.factory.createPropertyAccessExpression(
+      ts.factory.createIdentifier(`${moduleName}_1`),
+      ts.factory.createIdentifier(name)
+    );
+  } else {
+    const returnType = node.typeArguments[0];
+    const typeExpression = createTypeExpression(returnType, checker);
+    const newNode = ts.factory.updateCallExpression(
+      node,
+      node.expression,
+      node.typeArguments,
+      [typeExpression, ...node.arguments]
+    );
+    return newNode;
+  }
 }
 
 function createTypeExpression(
@@ -228,9 +304,14 @@ function rewriteAskCall(
     paramTypeStrings[i],
     sym.name,
   ]);
-  const examples = (
+  const trainingExamples = (
     node.arguments.length >= 2 && ts.isIdentifier(node.arguments[1])
       ? getIdentifierValue(node.arguments[1], checker)
+      : []
+  ) as ExampleType[];
+  const testExamples = (
+    node.arguments.length >= 3 && ts.isIdentifier(node.arguments[2])
+      ? getIdentifierValue(node.arguments[2], checker)
       : []
   ) as ExampleType[];
   info.push({
@@ -238,7 +319,8 @@ function rewriteAskCall(
     desc: convertTemplate(template.text),
     params,
     name,
-    examples,
+    trainingExamples,
+    testExamples,
   });
 
   const sourceFileName = node.getSourceFile().fileName;
@@ -336,6 +418,89 @@ function makeSignature(
     undefined,
     params,
     type,
+    undefined
+  );
+
+  return signature;
+}
+
+function makeSignature2(
+  name: string,
+  returnType: ts.TypeNode,
+  paramType: ts.TypeLiteralNode,
+  variables: string[],
+  checker: ts.TypeChecker
+) {
+  // create TypeLiteralNode from paramType
+  const type = ts.factory.createTypeLiteralNode(
+    variables.map((name) => {
+      const member = paramType.members.find(
+        (member) => member.name?.getText() === name
+      );
+      if (member && ts.isPropertySignature(member)) {
+        return member;
+      } else {
+        return ts.factory.createPropertySignature(
+          undefined,
+          name,
+          undefined,
+          ts.factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword)
+        );
+      }
+    })
+  );
+
+  const params = variables.map((name) => {
+    const member = paramType.members.find(
+      (member) => member.name?.getText() === name
+    );
+    // initial type is any
+    let type: ts.TypeNode = ts.factory.createKeywordTypeNode(
+      ts.SyntaxKind.AnyKeyword
+    );
+    if (member && ts.isPropertySignature(member) && member.type) {
+      type = member.type;
+    }
+    return ts.factory.createBindingElement(
+      undefined,
+      undefined,
+      name,
+      undefined
+    );
+  });
+
+  // create biding elements
+  // const params = symbols.map((sym) => {
+  //   const member = paramType.members.find(
+  //     (member) => member.name?.getText() === sym.name
+  //   );
+  //   // initial type is any
+  //   let type: ts.TypeNode = ts.factory.createKeywordTypeNode(
+  //     ts.SyntaxKind.AnyKeyword
+  //   );
+  //   if (member && ts.isPropertySignature(member) && member.type) {
+  //     type = member.type;
+  //   }
+  //   return ts.factory.createBindingElement(
+  //     undefined,
+
+  const objParameter = ts.factory.createParameterDeclaration(
+    undefined,
+    undefined,
+    ts.factory.createObjectBindingPattern(params),
+    undefined,
+    type
+  );
+
+  const exportModifier = ts.factory.createModifier(ts.SyntaxKind.ExportKeyword);
+
+  const signature = ts.factory.createFunctionDeclaration(
+    [exportModifier],
+    undefined,
+    name,
+    undefined,
+    [objParameter],
+    returnType,
     undefined
   );
 
