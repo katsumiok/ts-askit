@@ -4,7 +4,7 @@ export interface Config {
 }
 
 let config: Config = {
-  openai_model: 'gpt-3.5-turbo',
+  openai_model: process.env.ASKIT_MODEL || 'gpt-3.5-turbo',
   openai_apiKey: process.env.OPENAI_API_KEY || '',
 };
 

@@ -217,7 +217,7 @@ ${examples}
 export async function sendChatRequest(
   messages: ChatCompletionRequestMessage[]
 ): Promise<string> {
-  const result = await chatWithRetry('gpt-3.5-turbo-16k', messages);
+  const result = await chatWithRetry(getConfig().openai_model, messages);
   //console.log(JSON.stringify(result.data));
   //console.log('-----');
   return result.data.choices[0].message.content;
@@ -261,7 +261,7 @@ async function askAndParse<T>(
   const errors: string[] = [];
   for (let i = 0; i < 10; i++) {
     // console.log(messages);
-    const completion = await chatWithRetry('gpt-3.5-turbo-16k', messages);
+    const completion = await chatWithRetry(getConfig().openai_model, messages);
     const content = completion.data.choices[0].message.content;
     try {
       const [data, reason] = parse(content, returnType);
