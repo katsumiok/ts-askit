@@ -248,6 +248,8 @@ export function convertToDynamicType(
     return ts.factory.createObjectLiteralExpression(
       type.members.map((member) => handleTypeElement(member, checker))
     );
+  } else if (type.getText() === 'void') {
+    return ts.factory.createIdentifier('__void__');
   } else if (type.getText() === 'number') {
     return ts.factory.createIdentifier('__number__');
   } else if (type.getText() === 'string') {
