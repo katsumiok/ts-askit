@@ -219,7 +219,8 @@ function rewriteDefineCall(
     );
   } else {
     const returnType = node.typeArguments[0];
-    const typeExpression = createTypeExpression(returnType, checker);
+    const typeExpression = convertToDynamicType(returnType, checker);
+    //const typeExpression = createTypeExpression(returnType, checker);
     const newNode = ts.factory.updateCallExpression(
       node,
       node.expression,
