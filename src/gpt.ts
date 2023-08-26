@@ -184,7 +184,7 @@ function makeCodingPrompt(
     {
       role: ChatCompletionRequestMessageRoleEnum.System,
       content:
-        "You are a TypeScript programmer. Your task is to implement the body of the function in strict mode, following TypeScript's strict typing rules.",
+        "You are a TypeScript programmer. Your task is to implement the body of the function in strict mode, following TypeScript's strict typing rules. Use library functions if necessary.",
     },
     {
       role: ChatCompletionRequestMessageRoleEnum.User,
@@ -326,7 +326,7 @@ export async function askCode(
   trainingExamples: ExamplesType
 ): Promise<any> {
   const messages = makeCodingPrompt(message, functionName, trainingExamples);
-  console.log(messages.map((message) => message.content).join('\n'));
+  // console.log(messages.map((message) => message.content).join('\n'));
   const s = await sendChatRequest(messages);
   //console.log(s);
   return s;
