@@ -189,14 +189,14 @@ async function testFunction(generatedFunc: any, i: Info) {
         !_.isEqual(actualOutput, example.output) &&
         !almostEqual(actualOutput, example.output) // XXX: for float
       ) {
-        console.log(
-          'Failed: ',
-          example.input,
-          example.output,
-          actualOutput,
-          i.desc
-        );
-        console.log(JSON.stringify(args));
+        // console.log(
+        //   'Failed: ',
+        //   example.input,
+        //   example.output,
+        //   actualOutput,
+        //   i.desc
+        // );
+        // console.log(JSON.stringify(args));
         ok = false;
       }
     }
