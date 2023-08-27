@@ -2,7 +2,7 @@ import * as ts from 'typescript';
 import * as path from 'path';
 import * as fs from 'fs';
 import { throwError } from '../common';
-import { getIdentifierValue } from '../expression';
+import { getExpressionValue } from '../expression';
 import { JsTypeGenerator, convertToDynamicType } from '../type';
 import { generateUniqueFunctionName } from '../function-name';
 import { Info } from '../info';
@@ -173,13 +173,13 @@ function rewriteDefineCall(
   const decl = makeSignature2(name, returnType, paramType, variables, checker);
   const signature = printNode(decl);
   const trainingExamples = (
-    node.arguments.length >= 2 && ts.isIdentifier(node.arguments[1])
-      ? getIdentifierValue(node.arguments[1], checker)
+    node.arguments.length >= 2
+      ? getExpressionValue(node.arguments[1], checker)
       : []
   ) as ExampleType[];
   const testExamples = (
-    node.arguments.length >= 3 && ts.isIdentifier(node.arguments[2])
-      ? getIdentifierValue(node.arguments[2], checker)
+    node.arguments.length >= 3
+      ? getExpressionValue(node.arguments[2], checker)
       : []
   ) as ExampleType[];
   info.push({
@@ -306,13 +306,13 @@ function rewriteAskCall(
     sym.name,
   ]);
   const trainingExamples = (
-    node.arguments.length >= 2 && ts.isIdentifier(node.arguments[1])
-      ? getIdentifierValue(node.arguments[1], checker)
+    node.arguments.length >= 2
+      ? getExpressionValue(node.arguments[1], checker)
       : []
   ) as ExampleType[];
   const testExamples = (
-    node.arguments.length >= 3 && ts.isIdentifier(node.arguments[2])
-      ? getIdentifierValue(node.arguments[2], checker)
+    node.arguments.length >= 3
+      ? getExpressionValue(node.arguments[2], checker)
       : []
   ) as ExampleType[];
   info.push({

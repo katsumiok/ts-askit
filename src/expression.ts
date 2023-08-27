@@ -1,7 +1,7 @@
-import ts from 'typescript';
+import ts, { isExpression } from 'typescript';
 import { throwError } from './common';
 
-export function getIdentifierValue(
+function getIdentifierValue(
   example: ts.Identifier,
   checker: ts.TypeChecker
 ): any {
@@ -39,7 +39,7 @@ function isBooleanLiteral(node: ts.Node): node is ts.BooleanLiteral {
   );
 }
 
-function getExpressionValue(
+export function getExpressionValue(
   initializer: ts.Expression,
   checker: ts.TypeChecker
 ) {
@@ -56,6 +56,14 @@ function getExpressionValue(
     return getIdentifierValue(initializer, checker);
   } else if (isBooleanLiteral(initializer)) {
     return getBooleanValue(initializer);
+  } else if (ts.isPrefixUnaryExpression(initializer)) {
+    if (initializer.operator === ts.SyntaxKind.MinusToken) {
+      const operand = initializer.operand;
+      if (ts.isNumericLiteral(operand)) {
+        return -getNumberValue(operand, checker);
+      }
+    }
+    throwError(initializer, 'Unknown type: ' + initializer.getText());
   } else {
     throwError(initializer, 'Unknown type: ' + initializer.getText());
   }
@@ -101,6 +109,9 @@ function getObjectValue(
           'Unknown variable: ' + property.name.getText()
         );
       }
+    } else if (property.name && ts.isStringLiteral(property.name)) {
+      const value = getExpressionValue((property as any).initializer, checker);
+      result[property.name.text] = value;
     }
   });
   return result;
