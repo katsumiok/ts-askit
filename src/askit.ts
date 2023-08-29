@@ -1,4 +1,3 @@
-import { Agent } from 'http';
 import { ExamplesType } from './example';
 import { define } from './function';
 import * as t from './types';
