@@ -2,6 +2,7 @@ src
 tests
 coverage
 examples
+package
 js_examples
 tsconfig.json
 doc
