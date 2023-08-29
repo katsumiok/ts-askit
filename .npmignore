@@ -1,5 +1,5 @@
 src
-test
+tests
 coverage
 examples
 js_examples
