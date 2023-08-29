@@ -30,7 +30,7 @@ If Python is your preferred language, you can learn more about how to utilize *A
 Before starting, ensure that [Node.js](http://nodejs.org/) and [npm](https://npmjs.com) are installed on your system. Then, execute the following command:
 
 ```bash
-npm install ts-askit # XXX: not published yet
+npm install ts-askit
 ```
 
 This package relies on `ts-patch`. To install `ts-patch`, run:
@@ -50,6 +50,20 @@ Add the following snippet to your `tsconfig.json`:
 This modification allows the TypeScript compiler to support type parameters for the `ask` and `define` APIs in AskIt.
 
 The `ts-patch` package is crucial for unleashing the full potential of AskIt, as it extends the TypeScript compiler to fully integrate AskIt's type system. While AskIt can be used without `ts-patch`, this integration offers a more feature-rich experience.
+
+Before using *AskIt*, you need to set your OpenAI API key as an environment variable `OPENAI_API_KEY` and `ASKIT_MODEL`:
+```bash
+export OPENAI_API_KEY=<your OpenAI API key>
+```
+`<you OpenAI API key>` is a string that looks like this: `sk-<your key>`.
+ You can find your API key in the [OpenAI dashboard](https://platform.openai.com/account/api-keys).
+
+You can also specify the model name as an environment variable `ASKIT_MODEL`:
+```bash
+export ASKIT_MODEL=<model name>
+```
+`<model name>` is the name of the model you want to use. 
+The latest AskIt is tested with `gpt-4` and `gpt-3.5-turbo-16k`. You can find the list of available models in the [OpenAI API documentation](https://platform.openai.com/docs/models).
 
 ## API Usage
 
