@@ -55,7 +55,7 @@ Before using *AskIt*, you need to set your OpenAI API key as an environment vari
 ```bash
 export OPENAI_API_KEY=<your OpenAI API key>
 ```
-`<you OpenAI API key>` is a string that looks like this: `sk-<your key>`.
+`<your OpenAI API key>` is a string that looks like this: `sk-<your key>`.
  You can find your API key in the [OpenAI dashboard](https://platform.openai.com/account/api-keys).
 
 You can also specify the model name as an environment variable `ASKIT_MODEL`:
@@ -89,7 +89,7 @@ import { define } from 'ts-askit';
 
 const paraphrase = define<string>('Paraphrase {{text}}');
 
-paraphrase({text: 'Hello World!'}).then((result) => {
+paraphrase({ text: 'Hello World!' }).then((result) => {
   console.log(result);
 });
 ```
@@ -102,25 +102,25 @@ Once the function is defined, it can be invoked like any other function. This fu
 **AskIt** is adept at generating code from natural language descriptions. Here's an example:
 
 ```ts
-import { ask } from 'ts-askit';
+import { define } from 'ts-askit';
 
-function sort(numbers: number[]){
-  return ask<number[]>('Sort {{numbers}} in ascending order');
-}
+const sort = define<number[], { numbers: number[] }>(
+  'Sort {{numbers}} in ascending order'
+);
 ```
 
-This example showcases a function that sorts an array of numbers in ascending order, utilizing the `ask` API to instruct the LLM to perform the task. While efficient in concept, this method may seem computationally heavy as each function call requires a new LLM task.
+This example showcases a function that sorts an array of numbers in ascending order, utilizing the `define` API to instruct the LLM to define the function. While efficient in concept, this method may seem computationally heavy as each function call requires a new LLM task.
 
 To streamline this process, we can leverage the LLM to generate the sorting function's code, rather than resorting to the LLM for every sorting task. This optimizes the function without requiring any changes in its implementation, thanks to **AskIt**'s code generation capabilities.
 
 The code for the aforementioned function can be generated in three steps:
 
-1. First, compile the code using the TypeScript compiler `tsc`. The **AskIt** analyzer scans the code and generates a jsonl file containing details about the `ask` API calls.
+1. First, compile the code using the TypeScript compiler `tsc`. The **AskIt** analyzer scans the code and generates a jsonl file containing details about the `define` and `ask` API calls.
 2. Next, run the ts-askit command to generate the function's code:
 ```bash
 npx askgen <jsonl file>
 ```
-3. Finally, recompile the code with the TypeScript compiler `tsc`. This time, the `ask` API calls are replaced by the calls to the newly generated function, thanks to **AskIt**'s auto-replacement feature.
+3. Finally, recompile the code with the TypeScript compiler `tsc`. This time, the `define` and `ask` API calls are replaced by the references and calls to the newly generated function, respectively, thanks to **AskIt**'s auto-replacement feature.
 
 
 ## Programming by Example with **AskIt**
@@ -128,20 +128,33 @@ npx askgen <jsonl file>
 **AskIt** allows you to leverage the power of Programming by Example (PBE). PBE simplifies the programming process by enabling you to define functionality through examples rather than hard-coded logic. The following example illustrates this by showing you how to add two binary numbers using PBE with **AskIt**.
 
 ```ts
-import { ask, Example } from 'ts-askit';
+import { define, Example } from 'ts-askit';
 
-function addInBase2(x: string, y: string) {
-  const examples: Example[] = [
-    { input: { x: '1', y: '0' }, output: '1' },
-    { input: { x: '1', y: '1' }, output: '10' },
-    { input: { x: '101', y: '11' }, output: '1000' },
-    { input: { x: '1001', y: '110' }, output: '1111' },
-    { input: { x: '1111', y: '1' }, output: '10000' },
-  ];
-  return ask<string>('Add {{x}} and {{y}}', examples);
+const trainingExamples: Example[] = [
+  { input: { x: '1', y: '0' }, output: '1' },
+  { input: { x: '1', y: '1' }, output: '10' },
+  { input: { x: '101', y: '11' }, output: '1000' },
+  { input: { x: '1001', y: '110' }, output: '1111' },
+  { input: { x: '1111', y: '1' }, output: '10000' },
+];
+const testExamples = [
+  { input: { x: '0', y: '1' }, output: '1' },
+  { input: { x: '10', y: '0' }, output: '10' },
+  { input: { x: '110', y: '10' }, output: '1000' },
+];
+const addInBase2 = define<string, { x: string; y: string }>(
+  'Add {{x}} and {{y}}',
+  trainingExamples,
+  testExamples
+);
+
+async function doit() {
+  console.log(await addInBase2({ x: '101', y: '11' }));
 }
+
+doit();
 ```
-In this example, we have a function `addInBase2` that takes two binary numbers (represented as strings) and adds them. The `ask` function is invoked with a prompt and an array of examples. Each example in this array is an object that maps inputs to outputs. The `ask` function utilizes these examples and the prompt to interpret and execute the desired operation. 
+In this example, we define a function `addInBase2` that takes two binary numbers (represented as strings) and adds them. The `define` function is invoked with a prompt and two arrays of examples: training examples and test examples. The training examples are reflected in the prompt in a few-shot learning manner. On the other hand, the test examples are used to validate the generated function's correctness. Test examples are not required if you don't generate code for the function.
 
 The result is a powerful feature allowing you to instruct the LLM to perform complex operations, like binary addition, using nothing but examples. This approach enables you to develop complex functionality rapidly and with less explicit logic.
 
