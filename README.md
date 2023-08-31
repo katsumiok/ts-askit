@@ -1,6 +1,9 @@
 <!-- {% raw %} -->
 # AskIt (ts-askit)
 
+[![arXiv](https://img.shields.io/badge/arXiv-2308.15645-b31b1b.svg)](https://arxiv.org/abs/2308.15645)
+
+
 ## Overview
 
 AskIt is a language plugin for TypeScript that enables you to leverage the capabilities of a large language model (LLM), such as GPT-4, directly within your programming environment, no complex APIs needed. AskIt's extensive range of applications includes:
@@ -16,7 +19,7 @@ Built upon the [OpenAI API](https://beta.openai.com/), AskIt provides a user-fri
 
 For integrating *AskIt* with JavaScript, please refer to the corresponding [JavaScript section](#use-askit-with-javascript). 
 
-If Python is your preferred language, you can learn more about how to utilize *AskIt* by visiting our dedicated [AskIt (pyaskit) page](https://katsumiok.github.io/pyaskit/).
+If Python is your preferred language, you can learn more about how to utilize *AskIt* by visiting our dedicated [AskIt (pyaskit) page](https://github.com/katsumiok/pyaskit).
 
 ## Key Features
 
@@ -230,4 +233,15 @@ For details on our code of conduct and the process for submitting pull requests,
 ## License
 
 This project is licensed under the MIT License. For more information, see the [LICENSE](LICENSE) file.
+
+```bibtex
+@misc{okuda2023askit,
+      title={AskIt: Unified Programming Interface for Programming with Large Language Models}, 
+      author={Katsumi Okuda and Saman Amarasinghe},
+      year={2023},
+      eprint={2308.15645},
+      archivePrefix={arXiv},
+      primaryClass={cs.PL}
+}
+```
 <!-- {% endraw %} -->
