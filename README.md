@@ -23,10 +23,12 @@ If Python is your preferred language, you can learn more about how to utilize *A
 
 ## Key Features
 
-- [x] Output control for LLMs driven by TypeScript's type system
-- [x] Template-based function definition
-- [x] Natural Language Programming (NLP) with integrated code synthesis
-- [x] Programming by Example (PBE)
+- [x] Type-Guided Output Control: Use types instead of specifying the output format in the prompt.
+  ![Type-guided output control demonstration](https://katsumiok.github.io/ts-askit/images/type-guided.gif)
+- [x] Template-based function definition: Define functions using a prompt template.
+  ![Template-based function definition demonstration](https://katsumiok.github.io/ts-askit/images/func_def.gif)
+- [x] Natural Language Programming: Employ code generation for task execution.
+- [x] Programming by Example (PBE): Define functions using examples.
 
 ## Installation
 
