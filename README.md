@@ -23,12 +23,16 @@ If Python is your preferred language, you can learn more about how to utilize *A
 
 ## Key Features
 
-- [x] Type-Guided Output Control: Use types instead of specifying the output format in the prompt.
+- [x] Type-Guided Output Control: Get a response in the specified type. 
+  - No need to specify the output format in the prompt
+  - No need to parse the response to extract the desired output
+
   ![Type-guided output control demonstration](https://katsumiok.github.io/ts-askit/images/type-guided.gif)
-- [x] Template-based function definition: Define functions using a prompt template.
+- [x] Template-Based Function Definition: Define functions using a prompt template.
   ![Template-based function definition demonstration](https://katsumiok.github.io/ts-askit/images/func_def.gif)
-- [x] Natural Language Programming: Employ code generation for task execution.
+- [x] Code Generation: Generate functions from the unified interface.
 - [x] Programming by Example (PBE): Define functions using examples.
+See [Programming by Example with AskIt](#programming-by-example-with-askit) for more details.
 
 ## Installation
 
