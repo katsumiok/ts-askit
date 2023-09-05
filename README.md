@@ -31,6 +31,7 @@ If Python is your preferred language, you can learn more about how to utilize *A
 - [x] Template-Based Function Definition: Define functions using a prompt template.
   ![Template-based function definition demonstration](https://katsumiok.github.io/ts-askit/images/func_def.gif)
 - [x] Code Generation: Generate functions from the unified interface.
+See [Code Generation with AskIt](#code-generation-with-askit) for more details.
 - [x] Programming by Example (PBE): Define functions using examples.
 See [Programming by Example with AskIt](#programming-by-example-with-askit) for more details.
 
