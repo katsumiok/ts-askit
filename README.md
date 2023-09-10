@@ -1,7 +1,7 @@
 <!-- {% raw %} -->
 # AskIt (ts-askit)
 
-[![TypeScript CI](https://github.com/katsumiok/ts-askit/actions/workflows/typescript-ci.yml/badge.svg)](https://github.com/katsumiok/ts-askit/actions/workflows/ci.yml)
+[![TypeScript CI](https://github.com/katsumiok/ts-askit/actions/workflows/typescript-ci.yml/badge.svg)](https://github.com/katsumiok/ts-askit/actions/workflows/typescript-ci.yml)
 [![arXiv](https://img.shields.io/badge/arXiv-2308.15645-b31b1b.svg)](https://arxiv.org/abs/2308.15645)
 
 
