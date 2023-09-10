@@ -1,32 +1,25 @@
 name: TypeScript CI
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+on: [push, pull_request]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Use Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: '20'
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20'
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Build
-      run: npm run build
+      - name: Build
+        run: npm run build
 
-    - name: Test
-      run: npm test
+      - name: Test
+        run: npm test
