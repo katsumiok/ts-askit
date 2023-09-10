@@ -1,6 +1,7 @@
 <!-- {% raw %} -->
 # AskIt (ts-askit)
 
+[![TypeScript CI](https://github.com/katsumiok/ts-askit/actions/workflows/typescript-ci.yml/badge.svg)](https://github.com/katsumiok/ts-askit/actions/workflows/ci.yml)
 [![arXiv](https://img.shields.io/badge/arXiv-2308.15645-b31b1b.svg)](https://arxiv.org/abs/2308.15645)
 
 
@@ -61,7 +62,7 @@ This modification allows the TypeScript compiler to support type parameters for 
 
 The `ts-patch` package is crucial for unleashing the full potential of AskIt, as it extends the TypeScript compiler to fully integrate AskIt's type system. While AskIt can be used without `ts-patch`, this integration offers a more feature-rich experience.
 
-Before using *AskIt*, you need to set your OpenAI API key as an environment variable `OPENAI_API_KEY` and `ASKIT_MODEL`:
+Before using *AskIt*, you need to set your OpenAI API key as an environment variable `OPENAI_API_KEY`:
 ```bash
 export OPENAI_API_KEY=<your OpenAI API key>
 ```
