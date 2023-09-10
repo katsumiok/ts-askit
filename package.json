@@ -1,7 +1,31 @@
 {
   "name": "ts-askit",
-  "version": "1.0.0",
-  "description": "AskIt: Language extension for programming with large language models",
+  "version": "1.0.1",
+  "description": "AskIt: Unified programming interface for programming with large language models (GPT-3.5 / GPT-4)",
+  "keywords": [
+    "llm",
+    "openai",
+    "gpt",
+    "gpt-3.5",
+    "gpt-4",
+    "llama",
+    "api",
+    "wrapper",
+    "library",
+    "framework",
+    "dsl",
+    "parser"
+  ],
+  "homepage": "https://github.com/katsumiok/ts-askit#readme",
+  "bugs": {
+    "url": "https://github.com/katsumiok/ts-askit/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/katsumiok/ts-askit.git"
+  },
+  "license": "MIT",
+  "author": "Katsumi Okuda",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -26,13 +50,11 @@
     "lint": "eslint 'src/**/*.ts'",
     "format": "prettier --write 'src/**/*.ts'",
     "test": "jest",
-    "build": "npm run generate:schema && tsc",
+    "build": "tsc",
     "postinstall": "npx ts-patch install",
     "prepare": "npm run build",
     "prepublishOnly": "npm test && npm run lint"
   },
-  "author": "Katsumi Okuda",
-  "license": "MIT",
   "devDependencies": {
     "@types/jest": "^29.5.3",
     "@typescript-eslint/eslint-plugin": "^6.5.0",
