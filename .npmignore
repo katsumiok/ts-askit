@@ -20,3 +20,5 @@ reports
 dist/jest.config.*
 junit.xml
 *.tgz
+.github
+TODO.md
