@@ -6,11 +6,13 @@ package
 js_examples
 tsconfig.json
 doc
+images
 .nyc_output
 .vscode
 .nycrc
 .prettierrc.json
 .eslintrc.json
+.eslintrc.js
 .idea
 jest.config.ts
 reports
