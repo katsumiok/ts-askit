@@ -44,6 +44,14 @@ export class TypeConverter {
     return exp.getText();
   }
 
+  printTuple(types: string[]): string {
+    return `[${types.join(', ')}]`;
+  }
+
+  printRecord(key: string, value: string): string {
+    return `{ [key: ${key}]: ${value} }`;
+  }
+
   handleTypeElement(typeElement: ts.TypeElement, checker: ts.TypeChecker) {
     if (ts.isPropertySignature(typeElement)) {
       const name = typeElement.name.getText();
@@ -86,6 +94,25 @@ export class TypeConverter {
         return result;
       }
     } else if (ts.isTypeLiteralNode(type)) {
+      // check if type is a dictionary like { [key: string]: number }
+      console.log('----------');
+      if (type.members.length === 1) {
+        const member = type.members[0];
+        if (
+          ts.isIndexSignatureDeclaration(member) &&
+          member.parameters.length === 1
+        ) {
+          console.log('xxxx', member.parameters[0].type, member.type);
+          const keyType = member.parameters[0].type;
+          const valueType = member.type;
+          if (keyType && valueType) {
+            return this.printRecord(
+              this.makeTypeDirection(keyType, checker),
+              this.makeTypeDirection(valueType, checker)
+            );
+          }
+        }
+      }
       const members = this.printTypeElements(
         type.members.map((member) => this.handleTypeElement(member, checker))
       );
@@ -108,6 +135,10 @@ export class TypeConverter {
       } else if (ts.isNumericLiteral(type.literal)) {
         return this.printNumericLiteral(type.literal);
       }
+    } else if (ts.isTupleTypeNode(type)) {
+      return this.printTuple(
+        type.elements.map((t) => this.makeTypeDirection(t, checker))
+      );
     }
     throw throwError(type, 'Not implemented type: ');
   }
@@ -145,11 +176,17 @@ export class IoTypeChecker extends TypeConverter {
   override printUnion(types: string[]): string {
     return `t.union([${types.join(', ')}])`;
   }
+
   override printStringLiteral(exp: ts.LiteralExpression): string {
     return `t.literal(${exp.getText()})`;
   }
+
   override printNumericLiteral(exp: ts.LiteralExpression): string {
     return `t.literal(${exp.getText()})`;
+  }
+
+  override printTuple(types: string[]): string {
+    return `t.tuple([${types.join(', ')}])`;
   }
 }
 
@@ -186,12 +223,22 @@ export class JsTypeGenerator extends TypeConverter {
     console.log(types);
     return `__union__([${types.join(', ')}])`;
   }
+
   override printStringLiteral(exp: ts.LiteralExpression): string {
     console.log(exp.text, exp.getText());
     return `__literal__(${exp.getText()})`;
   }
+
   override printNumericLiteral(exp: ts.LiteralExpression): string {
     return `__literal__(${exp.getText()})`;
+  }
+
+  override printTuple(types: string[]): string {
+    return `__tuple__([${types.join(', ')}])`;
+  }
+
+  override printRecord(key: string, value: string): string {
+    return `__record__(${key}, ${value})`;
   }
 }
 
@@ -238,15 +285,37 @@ export function convertToDynamicType(
       if (!result) {
         throwError(type, 'not implemented: ' + type.getText());
       }
-      return ts.factory.createCallExpression(
-        ts.factory.createIdentifier('__type__'),
-        undefined,
-        [result]
-      );
+      return result;
     }
   } else if (ts.isTypeLiteralNode(type)) {
-    return ts.factory.createObjectLiteralExpression(
+    // check if type is a dictionary like { [key: string]: number }
+    if (type.members.length === 1) {
+      const member = type.members[0];
+      if (
+        ts.isIndexSignatureDeclaration(member) &&
+        member.parameters.length === 1
+      ) {
+        const keyType = member.parameters[0].type;
+        const valueType = member.type;
+        if (keyType && valueType) {
+          return ts.factory.createCallExpression(
+            ts.factory.createIdentifier('__record__'),
+            undefined,
+            [
+              convertToDynamicType(keyType, checker),
+              convertToDynamicType(valueType, checker),
+            ]
+          );
+        }
+      }
+    }
+    const t = ts.factory.createObjectLiteralExpression(
       type.members.map((member) => handleTypeElement(member, checker))
+    );
+    return ts.factory.createCallExpression(
+      ts.factory.createIdentifier('__type__'),
+      undefined,
+      [t]
     );
   } else if (type.getText() === 'void') {
     return ts.factory.createIdentifier('__void__');
@@ -282,6 +351,16 @@ export function convertToDynamicType(
         [type.literal]
       );
     }
+  } else if (ts.isTupleTypeNode(type)) {
+    return ts.factory.createCallExpression(
+      ts.factory.createIdentifier('__tuple__'),
+      undefined,
+      [
+        ts.factory.createArrayLiteralExpression(
+          type.elements.map((t) => convertToDynamicType(t, checker))
+        ),
+      ]
+    );
   }
   throwError(type, `Not implemented type: ${type.getText()}`);
 }

@@ -85,6 +85,32 @@ class TypeValidator implements t.TypeVisitor<boolean, [any]> {
     }
     throw new Error(`Expected literal to be ${type.value}`);
   }
+  visitRecordType(type: t.RecordType<t.ValidType>, data: any): boolean {
+    if (typeof data !== 'object') {
+      throw new Error('Expected object');
+    }
+    for (const key in data) {
+      if (!type.keyType.accept(this, key)) {
+        throw new Error(`Expected key to be ${type.keyType}`);
+      }
+      if (!type.valueType.accept(this, data[key])) {
+        throw new Error(`Expected value to be ${type.valueType}`);
+      }
+    }
+    return true;
+  }
+  visitTupleType(type: t.TupleType<t.ValidType>, data: any): boolean {
+    if (!Array.isArray(data)) {
+      throw new Error('Expected array');
+    }
+    if (type.types.length != data.length) {
+      throw new Error('The length of the tuple is not correct');
+    }
+    for (let i = 0; i < type.types.length; i++) {
+      type.types[i].accept(this, data[i]);
+    }
+    return true;
+  }
 }
 
 export function validate(type: t.Type<any>, data: any): boolean {

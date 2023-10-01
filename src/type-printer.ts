@@ -21,6 +21,13 @@ export function printType<T>(type: t.Type<T>): string {
   } else if (type instanceof t.ArrayType) {
     const typeString = printType(type.type);
     return `${typeString}[]`;
+  } else if (type instanceof t.TupleType) {
+    const typeStrings = type.types.map((type) => printType(type));
+    return `[${typeStrings.join(', ')}]`;
+  } else if (type instanceof t.RecordType) {
+    const keyTypeString = printType(type.keyType);
+    const valueTypeString = printType(type.valueType);
+    return `{ [${keyTypeString}]: ${valueTypeString} }`;
   }
   throw new Error('Unknown type: ' + type);
 }

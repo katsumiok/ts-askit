@@ -5,7 +5,9 @@ export type ValidType =
   | CodeType
   | ArrayType<ValidType>
   | UnionType<ValidType>
-  | InterfaceType<ValidType>;
+  | InterfaceType<ValidType>
+  | RecordType<ValidType>
+  | TupleType<ValidType>;
 
 // all valid languages usable in code blocks in
 export type LanguageType =
@@ -44,6 +46,8 @@ export interface TypeVisitor<ReturnType, ArgsType extends Array<unknown>> {
     ...args: ArgsType
   ): ReturnType;
   visitLiteralType(type: LiteralType<unknown>, ...args: ArgsType): ReturnType;
+  visitRecordType(type: RecordType<ValidType>, ...args: ArgsType): ReturnType;
+  visitTupleType(type: TupleType<ValidType>, ...args: ArgsType): ReturnType;
 }
 
 export class Type<T> {
@@ -171,6 +175,33 @@ export class LiteralType<T> extends Type<T> {
   }
 }
 
+export class RecordType<T> extends Type<T> {
+  constructor(
+    public keyType: Type<T>,
+    public valueType: Type<T>
+  ) {
+    super();
+  }
+  override accept<ReturnType, ArgsType extends unknown[]>(
+    visitor: TypeVisitor<ReturnType, ArgsType>,
+    ...args: ArgsType
+  ): ReturnType {
+    return visitor.visitRecordType(this, ...args);
+  }
+}
+
+export class TupleType<T> extends Type<T> {
+  constructor(public types: Type<T>[]) {
+    super();
+  }
+  override accept<ReturnType, ArgsType extends unknown[]>(
+    visitor: TypeVisitor<ReturnType, ArgsType>,
+    ...args: ArgsType
+  ): ReturnType {
+    return visitor.visitTupleType(this, ...args);
+  }
+}
+
 export function type<T>(dic: { [key: string]: Type<ValidType> }): Type<T> {
   return new InterfaceType(dic);
 }
@@ -185,4 +216,12 @@ export function array<T>(type: Type<T>): Type<T[]> {
 
 export function literal<T>(value: T): Type<T> {
   return new LiteralType(value);
+}
+
+export function record<T>(keyType: Type<T>, valueType: Type<T>): Type<T> {
+  return new RecordType(keyType, valueType);
+}
+
+export function tuple<T>(types: Type<T>[]): Type<T> {
+  return new TupleType(types);
 }

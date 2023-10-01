@@ -8,9 +8,21 @@ export {
   InterfaceType,
   UnionType,
   CodeType,
+  TupleType,
+  RecordType,
 } from './typing';
 export type { ValidType, TypeVisitor } from './typing';
-export { number, string, boolean, type, array, union, literal } from './typing';
+export {
+  number,
+  string,
+  boolean,
+  type,
+  array,
+  union,
+  literal,
+  tuple,
+  record,
+} from './typing';
 
 /*
 

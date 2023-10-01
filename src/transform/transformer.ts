@@ -38,6 +38,8 @@ function update(node: ts.SourceFile): ts.SourceFile {
       'object',
       'union',
       'literal',
+      'tuple',
+      'record',
     ].map((name) =>
       createRequire(`__${name}__`, name, [MODULE_NAME + '/types'])
     ),
